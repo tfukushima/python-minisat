@@ -8,7 +8,12 @@ setup(name='python-minisat',
       description="MiniSat wrapper module for Python",
       long_description="""\
 This package is wrapper module of `MiniSat <http://minisat.se/Main.html>`_.""",
-      classifiers=[], # Get strings from http://pypi.python.org/pypi?%3Aaction=list_classifiers
+      classifiers=[
+        "Programming Language :: C",
+        "Programming Language :: C++",
+        "Programming Language :: Python",
+        "Topic :: Software Development :: Libraries :: Python Modules"
+      ], # Get strings from http://pypi.python.org/pypi?%3Aaction=list_classifiers
       keywords='SAT MiniSat',
       author='Taku Fukushima',
       author_email='f.tac.mac@gmail.com',

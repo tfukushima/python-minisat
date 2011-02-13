@@ -1,9 +1,9 @@
 setup.cfg
 setup.py
+minisat/__init__.py
 python_minisat.egg-info/PKG-INFO
 python_minisat.egg-info/SOURCES.txt
 python_minisat.egg-info/dependency_links.txt
 python_minisat.egg-info/entry_points.txt
 python_minisat.egg-info/not-zip-safe
 python_minisat.egg-info/top_level.txt
-pythonminisat/__init__.py

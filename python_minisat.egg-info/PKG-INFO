@@ -1,7 +1,7 @@
 Metadata-Version: 1.0
 Name: python-minisat
 Version: 0.1.0dev
-Summary: MiniSat wrapper for Python
+Summary: MiniSat wrapper module for Python
 Home-page: http://www.dcl.info.waseda.ac.jp/~tfukushima/
 Author: Taku Fukushima
 Author-email: f.tac.mac@gmail.com
@@ -9,3 +9,7 @@ License: MIT License
 Description: This package is wrapper module of `MiniSat <http://minisat.se/Main.html>`_.
 Keywords: SAT MiniSat
 Platform: UNKNOWN
+Classifier: Programming Language :: C
+Classifier: Programming Language :: C++
+Classifier: Programming Language :: Python
+Classifier: Topic :: Software Development :: Libraries :: Python Modules
