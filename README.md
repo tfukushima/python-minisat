@@ -3,8 +3,8 @@ python-minisat - MiniSat Solver wrapper module for Python
 
 python-minisat is Python binding for [MiniSat](http://minisat.se/Main.html).
 
-Install
---------
+Installation
+------------
 
 * Using easy_install/distribute
 
@@ -18,6 +18,12 @@ Install
 
         $ python setup.py install
 
+References
+------------
+
+* [ruby-minisat](http://github.com/mame/ruby-minisat)
+* [MiniSat-ocaml](https://github.com/abate/MiniSat-ocaml)
+
 Copyright
 ---------
 
@@ -28,4 +34,5 @@ License
 --------
 
 python-minisat is [MIT Lisense](http://www.opensource.org/licenses/mit-license.php)
+
 If you'd like to know more detail, check ``COPYRIGHT`` in source.

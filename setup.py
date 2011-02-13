@@ -1,5 +1,6 @@
 from setuptools import setup, find_packages
 import sys, os
+# from Cython.Distutils import build_ext
 
 version = '0.1.0'
 
@@ -22,6 +23,8 @@ This package is wrapper module of `MiniSat <http://minisat.se/Main.html>`_.""",
       packages=find_packages(exclude=['ez_setup', 'examples', 'tests']),
       include_package_data=True,
       zip_safe=False,
+      # cmdclass = {'build_ext': build_ext},
+      ext_modules = [Extention("minisat", ["minisat.c", "MiniSatWrapper.cpp"])
       install_requires=[
           # -*- Extra requirements: -*-
       ],
