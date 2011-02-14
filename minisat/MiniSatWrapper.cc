@@ -10,6 +10,16 @@
 #include "Solver.h"
 #include "minisat.h"
 
+// Variable
+extern "C" int minisat_lit_pos_var(int value) {
+    return index(Lit(value, false));
+}
+
+extern "C" int minisat_lit_neg_var(int value) {
+    return index(Lit(value, true));
+}
+
+// Solver
 extern "C" minisat_solver minisat_new()
 {
     return (minisat_solver) new Solver();

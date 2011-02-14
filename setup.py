@@ -40,7 +40,7 @@ This package is wrapper module of `MiniSat <http://minisat.se/Main.html>`_.""",
                              "minisat/minisat.c"],
                     include_dirs=include_dirs,
                     library_dirs=library_dirs,
-                    # libraries = ["gcc", "stdc", "stdc++"],
+                    libraries = ["stdc++"],
                     # language = "c++"
                     )],
       install_requires=[
