@@ -6,7 +6,7 @@ python-minisat is Python binding for [MiniSat](http://minisat.se/Main.html).
 Installation
 ------------
 
-* Using easy_install/distribute
+* Using setuptools/distribute
 
         $ easy_install python-minisat
 
