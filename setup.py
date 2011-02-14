@@ -1,8 +1,18 @@
-from setuptools import setup, find_packages
+try:
+    from setuptools import setup, find_packages, Extension
+except ImportError:
+    from distutils.core import setup, find_packages, Extension
 import sys, os
 # from Cython.Distutils import build_ext
 
 version = '0.1.0'
+library_dirs = ['/usr/lib', '/usr/local/lib']
+MINISAT_ROOT = os.path.join(os.path.dirname(__file__), 'minisat/src')
+MINISAT_SOURCE_ROOT = os.path.join(os.path.dirname(__file__), 'minisat/src/minisat')
+include_dirs = filter(os.path.isdir, [ os.path.join(MINISAT_SOURCE_ROOT, d)
+                                       for d in os.listdir(MINISAT_SOURCE_ROOT) ])
+include_dirs += ['/usr/include', '/usr/local/include']
+include_dirs.append(MINISAT_ROOT)
 
 setup(name='python-minisat',
       version=version,
@@ -24,7 +34,15 @@ This package is wrapper module of `MiniSat <http://minisat.se/Main.html>`_.""",
       include_package_data=True,
       zip_safe=False,
       # cmdclass = {'build_ext': build_ext},
-      ext_modules = [Extention("minisat", ["minisat.c", "MiniSatWrapper.cpp"])
+      ext_modules = [
+          Extension("minisat",
+                    sources=["minisat/MiniSatWrapper.cc",
+                             "minisat/minisat.c"],
+                    include_dirs=include_dirs,
+                    library_dirs=library_dirs,
+                    # libraries = ["gcc", "stdc", "stdc++"],
+                    # language = "c++"
+                    )],
       install_requires=[
           # -*- Extra requirements: -*-
       ],
