@@ -7,10 +7,9 @@
  * @author: Taku Fukushima <tfukushima@dcl.info.waseda.ac.jp>
  */
 
-#include "Python.h"
-// #include "structmember.h"
+#include <Python.h>
+// #include <structmember.h>
 
-#include "Solver.h"
 #include "minisat.h"
 
 typedef enum status {
@@ -33,12 +32,15 @@ typedef struct {
 typedef struct {
     PyObject_HEAD
     int value;
-    minisat_solver solver;
+    SolverObject *solver;
 } VarObject;
 
 static PyMethodDef MiniSat_methods[] = {
     {NULL, NULL, 0, NULL}  // sentinel
-}
+};
+
+static PyObject *SolverError;
+static PyObject *VarError;
 
 // Var
 static PyTypeObject VarType = {
@@ -46,25 +48,25 @@ static PyTypeObject VarType = {
     tp_name: "minisat.Var",
     tp_basicsize: sizeof(VarObject),
     tp_flags: Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,
-    tp_doc: "MiniSat variable objects",
+    tp_doc: "MiniSat variable objects"
 };
 
 static PyObject *Var_positive(VarObject *var)
 {
-    VarObject *rvar = PyObject_New(&VarObject, &VarType);
+    VarObject *rvar = PyObject_New(VarObject, &VarType);
 
     rvar->value = minisat_lit_pos_var(var->value);
     rvar->solver = var->solver;
-    return rvar;
+    return (PyObject *)rvar;
 }
 
 static PyObject *Var_negative(VarObject *var)
 {
-    VarObject *rvar = PyObject_New(&VarObject, &VarType);
+    VarObject *rvar = PyObject_New(VarObject, &VarType);
 
     rvar->value = minisat_lit_neg_var(var->value);
     rvar->solver = var->solver;
-    return rvar;
+    return (PyObject *)rvar;
 }
 
 static void _is_model_available(status_t result, int deep_check)
@@ -89,8 +91,8 @@ static PyObject *Var_value(VarObject *var)
 {
     int value;
 
-    _is_model_available(var->solver->result, false);
-    value = minisat_model_value();
+    _is_model_available(var->solver->result, 0);
+    value = minisat_model_value(var->solver, var->value);
     switch (value) {
     case 0:  // case of l_True
         Py_RETURN_TRUE;
@@ -105,15 +107,11 @@ static PyObject *Var_value(VarObject *var)
 }
 
 static PyMethodDef Var_methods[] = {
-    {"__pos__", Var_positive, METH_NOARGS,""},
-    {"__neg__", Var_negative, METH_NOARGS, ""},
-    {"value", NULL, METH_NOARGS,""},
+    {"__pos__", Var_positive, METH_NOARGS,"Return positive variable."},
+    {"__neg__", Var_negative, METH_NOARGS, "Return negative(inversion) variable."},
+    {"value", NULL, METH_NOARGS,"Return value of var."},
     { NULL, NULL, 0, NULL}  // Sentinel
-}
-
-static PyMemberDef Var_memberss[] = {
-    { NULL, NULL, 0, NULL}  // Sentinel
-}
+};
 
 // Solver
 static PyObject* Solver_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
@@ -159,7 +157,7 @@ static void _vars_to_lits(PyObject *seq, int *lits, int len)
 
     for (i = 0; i < len; i++) {
         element = PySequence_Fast_GET_ITEM(seq, i);
-        lits[i] = minisat_lit_pos_var(element->value);
+        lits[i] = minisat_lit_pos_var(((VarObject *)element)->value);
     }
 }
 
@@ -201,8 +199,8 @@ static PyObject *Solver_new_var(SolverObject *self)
 {
     VarObject *var;
 
-    var = PyObject_New(VarObject, VarType);
-    var->value = minisat_new_var();
+    var = PyObject_New(VarObject, &VarType);
+    var->value = minisat_new_var(self->solver);
     var->solver = self->solver;
     self->result = NOT_SOLVED_YET;
     return (PyObject *)var;
@@ -213,20 +211,20 @@ static PyObject *Solver_issolved(SolverObject *self){
     if (self->result != NOT_SOLVED_YET)
         Py_RETURN_TRUE;
     else
-        Py_RETURN_FAlSE;
+        Py_RETURN_FALSE;
 }
 
 static PyObject *Solver_issatisfied(SolverObject *self)
 {
-    if (self->satisfied())
+    if (self->result == SATISFIED)
         Py_RETURN_TRUE;
     else
-        Py_RETURN_FAlSE;
+        Py_RETURN_FALSE;
 }
 
 static PyObject *Solver_simplify(SolverObject *self)
 {
-    if (!minsat_simplify(_solver->solver)) {
+    if (!minsat_simplify(self->solver)) {
         Py_RETURN_FALSE;
     }
     Py_RETURN_TRUE;
@@ -249,12 +247,12 @@ static PyObject *Solver_solve(SolverObject *self, PyObject *args)
     }
     
     if (!minisat_solve(self->solver, assumps, len)) {
-        free(lits);
+        free(assumps);
         self->result = (len != 0)? UNSATISFIABLE :
             UNSATISFIABLE_UNDER_ASSUMPTIONS;
         Py_RETURN_FALSE;
     }
-    free(lits);
+    free(assumps);
     self->result = SATISFIED;
     Py_RETURN_TRUE;
 }
@@ -265,20 +263,26 @@ static PyObject *Solver_var_size(SolverObject *self)
 }
 
 static PyMethodDef Solver_methods[] = {
-    {"add_clause", Solver_add_clause, METH_VARARGS, "Add clauses to solver."},
-    {"assigned_size", Solve_assigned_size, METH_NOARGS, ""},
-    {"clause_size", Solver_clause_size, METH_NOARGS, ""},
-    {"issolved", Solver_issolved, METH_NOARGS, ""},
-    {"issatified", Solver_issatisfied, METH_NOARGS, ""},
-    {"new_var", Solver_new_var, METH_NOARGS, "Add new variables to solver."},
-    {"simplify", Solver_simplify, METH_NOARGS, ""},
-    {"solve", Solver_solve, METH_NOARGS, ""},
-    {"var_size", Solver_var_size, METH_NOARGS, ""},
+    {"add_clause", Solver_add_clause, METH_VARARGS,
+     "Add a clause to solver.\nThe clause should be a list contains vars."},
+    {"assigned_size", Solver_assigned_size, METH_NOARGS,
+     "Return the size of assined variables."},
+    {"clause_size", Solver_clause_size, METH_NOARGS,
+     "Return the size of clauses."},
+    {"issolved", Solver_issolved, METH_NOARGS,
+     "Return if model is solved or not."},
+    {"issatified", Solver_issatisfied, METH_NOARGS,
+     "Return if model is satified or not"},
+    {"new_var", Solver_new_var, METH_NOARGS,
+     "Add new variables to solver."},
+    {"simplify", Solver_simplify, METH_NOARGS,
+     "Simplyfy the model with given variables."},
+    {"solve", Solver_solve, METH_NOARGS,
+     "Solve the model with given assumptions"},
+    {"var_size", Solver_var_size, METH_NOARGS,
+     "Return the size of variables"},
     { NULL, NULL, 0, NULL}  // Sentinel
 };
-
-static PyObject *SolverError;
-static PyObject *VarError;
 
 #ifndef PyMODINIT_FUNC
 #define PyMODINIT_FUNC void
@@ -288,7 +292,7 @@ initminisat(void)
 {
     PyObject *minisat;
     
-    minisat = Py_InitModule3("minisat", Minisat_methods,
+    minisat = Py_InitModule3("minisat", MiniSat_methods,
                              "Python binding for MiniSat.");
     if (minisat == NULL)
         return;
@@ -297,21 +301,21 @@ initminisat(void)
     SolverType.tp_methods = Solver_methods;
     if (PyType_Ready(&SolverType) < 0)
         return;
-    Py_INCREF(SolverType);
+    Py_INCREF(&SolverType);
     PyModule_AddObject(minisat, "Solver", (PyObject *)&SolverType);
     
     SolverError = PyErr_NewException("minisat.SolverError", NULL, NULL);
     Py_INCREF(SolverError);
-    PyModule_AddObject(minisat, "SolverError", &SolverError);
+    PyModule_AddObject(minisat, "SolverError", SolverError);
 
     // Var
     VarType.tp_methods = Var_methods;
     if (PyType_Ready(&VarType) < 0)
         return;
-    Py_INCREF(VarType);
+    Py_INCREF(&VarType);
     PyModule_AddObject(minisat, "Var", (PyObject *)&VarType);
     
     VarError = PyErr_NewException("minisat.VarError", NULL, NULL);
     Py_INCREF(SolverError);
-    PyModule_AddObject(minisat, "VarError", &SolverError);
+    PyModule_AddObject(minisat, "VarError", VarError);
 }
