@@ -132,14 +132,14 @@ static PyObject* Solver_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 }
 
 static PyObject* 
-Solver_dealloc(PyTypeObject *type, PyObject *args, PyObject *kwds)
+Solver_dealloc(SolverObject *self)
 {
     minisat_free(self->solver);
     /* Py_XDECREF(self->solver); */
     /* Py_XDECREF(self->result); */
     /* Py_XDECREF(self->clause_size); */
     /* Py_XDECREF(self->var_size); */
-    self->ob_type->ty_free((PyObject *)self);
+    self->ob_type->tp_free((PyObject *)self);
 }
 
 static PyTypeObject SolverType = {
@@ -148,6 +148,7 @@ static PyTypeObject SolverType = {
     tp_basicsize: sizeof(SolverObject),
     tp_flags: Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,
     tp_new : Solver_new,
+    tp_dealloc: (destructor) Solver_dealloc,
     tp_doc: "MiniSat solver objects",
 };
 
@@ -208,8 +209,7 @@ static PyObject *Solver_new_var(SolverObject *self)
 }
 
 
-static PyObject *Solver_issolved(SolverObject *self)
-{
+static PyObject *Solver_issolved(SolverObject *self){
     if (self->result != NOT_SOLVED_YET)
         Py_RETURN_TRUE;
     else
@@ -278,6 +278,7 @@ static PyMethodDef Solver_methods[] = {
 };
 
 static PyObject *SolverError;
+static PyObject *VarError;
 
 #ifndef PyMODINIT_FUNC
 #define PyMODINIT_FUNC void
