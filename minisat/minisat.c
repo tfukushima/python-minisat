@@ -269,11 +269,11 @@ static PyMethodDef Solver_methods[] = {
     {"assigned_size", Solve_assigned_size, METH_NOARGS, ""},
     {"clause_size", Solver_clause_size, METH_NOARGS, ""},
     {"issolved", Solver_issolved, METH_NOARGS, ""},
-    {"issatified", minisat_issatisfied, METH_NOARGS, ""},
-    {"new_var", minisat_new_var, METH_NOARGS, "Add new variables to solver."},
-    {"simplify", minisat_solve, METH_NOARGS, ""},
-    {"solve", minisat_solve, METH_NOARGS, ""},
-    {"var_size", minisat_solve, METH_NOARGS, ""},
+    {"issatified", Solver_issatisfied, METH_NOARGS, ""},
+    {"new_var", Solver_new_var, METH_NOARGS, "Add new variables to solver."},
+    {"simplify", Solver_simplify, METH_NOARGS, ""},
+    {"solve", Solver_solve, METH_NOARGS, ""},
+    {"var_size", Solver_var_size, METH_NOARGS, ""},
     { NULL, NULL, 0, NULL}  // Sentinel
 };
 
