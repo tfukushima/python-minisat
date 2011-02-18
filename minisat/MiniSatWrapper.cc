@@ -61,10 +61,23 @@ extern "C" int minisat_simplify(minisat_solver solver)
     return ((Solver *) solver)->simplify() ? 1 : 0;
 }
 
+// State
+extern "C" int minisat_model_value(minisat_solver solver, int var)
+{
+    lbool lb = ((Solver *)solver)->modelValue(var);
+    return (lb == l_True) ? 0 : (lb == l_False) 1 : 2;
+}
+
+extern "C" int minisat_assigned_size(minisat_solver solver)
+{
+    return ((Solver *)solver)->nAssign();
+}
+
 extern "C" int minisat_var_size(minisat_solver solver)
 {
     return ((Solver *)solver)->nVars();
 }
+
 extern "C" int minisat_clause_size(minisat_solver solver)
 {
     return ((Solver *)solver)->nClauses();
