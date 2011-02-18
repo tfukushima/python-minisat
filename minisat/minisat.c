@@ -175,18 +175,18 @@ static PyObject *Solver_add_clause(SolverObject *self, PyObject *args)
     if (!PyArg_ParseTuple(args, "O", &var_list)) {
         seq = PySequence_Fast(var_list, "the clause should be a list.");
         len = PySequence_Length(seq);
-        lits = (int *) malloc(sizeof(int)*len);
+        lits = (int *) PyMem_Malloc(sizeof(int)*len);
         if (lits == NULL)
             return PyErr_NoMemory();
         _vars_to_lits(seq, lits, len);
         Py_DECREF(seq);
     }
     if (!minisat_add_claus(self->solver, lits, len)) {
-        free(lits);
+        PyMem_Free(lits);
         Py_RETURN_FALSE;
     }
 
-    free(lits);
+    PyMem_Free(lits);
     Py_RETURN_TRUE;
 }
 
@@ -239,7 +239,7 @@ static PyObject *Solver_solve(SolverObject *self, PyObject *args)
     if (!PyArg_ParseTuple(args, "O", &var_list)) {
         seq = PySequence_Fast(var_list, "the assumption should be a list.");
         len = PySequence_Length(seq);
-        assumps = (int *) malloc(sizeof(int)*len);
+        assumps = (int *) PyMem_Malloc(sizeof(int)*len);
         if (assumps == NULL)
             return PyErr_NoMemory();
         _vars_to_lits(seq, assumps, len);
@@ -247,12 +247,12 @@ static PyObject *Solver_solve(SolverObject *self, PyObject *args)
     }
     
     if (!minisat_solve(self->solver, assumps, len)) {
-        free(assumps);
+        PyMem_Free(assumps);
         self->result = (len != 0)? UNSATISFIABLE :
             UNSATISFIABLE_UNDER_ASSUMPTIONS;
         Py_RETURN_FALSE;
     }
-    free(assumps);
+    PyMem_Free(assumps);
     self->result = SATISFIED;
     Py_RETURN_TRUE;
 }
