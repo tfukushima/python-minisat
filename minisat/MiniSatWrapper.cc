@@ -10,7 +10,7 @@
 #include <Solver.h>
 #include "minisat.h"
 
-using namespace Minisat
+using namespace Minisat;
 
 // Variable
 extern "C" int minisat_lit_pos_var(int value) {
