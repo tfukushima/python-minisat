@@ -7,16 +7,18 @@
  * @author: Taku Fukushima <tfukushima@dcl.info.waseda.ac.jp>
  */
 
-#include "Solver.h"
+#include <Solver.h>
 #include "minisat.h"
+
+using namespace Minisat;
 
 // Variable
 extern "C" int minisat_lit_pos_var(int value) {
-    return index(Lit(value, false));
+    return toInt(mkLit(value, false));
 }
 
 extern "C" int minisat_lit_neg_var(int value) {
-    return index(Lit(value, true));
+    return toInt(mkLit(value, true));
 }
 
 // Solver
@@ -65,12 +67,12 @@ extern "C" int minisat_simplify(minisat_solver solver)
 extern "C" int minisat_model_value(minisat_solver solver, int var)
 {
     lbool lb = ((Solver *)solver)->modelValue(var);
-    return (lb == l_True) ? 0 : (lb == l_False) 1 : 2;
+    return (lb == l_True) ? 0 : (lb == l_False)? 1 : 2;
 }
 
 extern "C" int minisat_assigned_size(minisat_solver solver)
 {
-    return ((Solver *)solver)->nAssign();
+    return ((Solver *)solver)->nAssigns();
 }
 
 extern "C" int minisat_var_size(minisat_solver solver)
