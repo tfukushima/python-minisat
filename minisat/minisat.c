@@ -139,6 +139,7 @@ static PyObject* Solver_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
     self = (SolverObject *)type->tp_alloc(type, 0);
     if (self != NULL) {
         self->solver = minisat_new();
+        self->result = NOT_SOLVED_YET;
         if (self->solver == NULL) {
             Py_DECREF(self);
             return NULL;
@@ -191,16 +192,21 @@ static PyObject *Solver_add_clause(SolverObject *self, PyObject *args)
     PyObject *var_list, *seq, *element, *ret;
     
     if (!PyArg_ParseTuple(args, "O", &var_list)) {
-        seq = PySequence_Fast(var_list, "the clause should be a list.");
-        len = PySequence_Length(seq);
-        lits = (int *) PyMem_Malloc(sizeof(int)*len);
-        if (lits == NULL)
-            return PyErr_NoMemory();
-        _vars_to_lits(seq, lits, len);
-        Py_DECREF(seq);
+        PyErr_SetString(PyExc_RuntimeError, "The clause should be given as a list.");
+        return NULL;
     }
+    seq = PySequence_Fast(var_list, "the clause should be a list.");
+    len = PySequence_Length(seq);
+    // lits = (int *) PyMem_Malloc(sizeof(int)*len);
+    lits = (int *) malloc(sizeof(int)*len);
+    if (lits == NULL)
+        return PyErr_NoMemory();
+    _vars_to_lits(seq, lits, len);
+    Py_DECREF(seq);
+
     if (!minisat_add_clause(self->solver, lits, len)) {
-        PyMem_Free(lits);
+        // PyMem_Free(lits);
+        free(lits);
         Py_RETURN_FALSE;
     }
 
@@ -255,22 +261,27 @@ static PyObject *Solver_solve(SolverObject *self, PyObject *args)
     PyObject *var_list, *seq, *ret;
 
     if (!PyArg_ParseTuple(args, "O", &var_list)) {
-        seq = PySequence_Fast(var_list, "the assumption should be a list.");
-        len = PySequence_Length(seq);
-        assumps = (int *) PyMem_Malloc(sizeof(int)*len);
-        if (assumps == NULL)
-            return PyErr_NoMemory();
-        _vars_to_lits(seq, assumps, len);
-        Py_DECREF(seq);
+        PyErr_SetString(PyExc_RuntimeError, "Model haven't been solved yet.");
+        return NULL;
     }
-    
+    seq = PySequence_Fast(var_list, "the assumption should be a list.");
+    len = PySequence_Length(seq);
+    // assumps = (int *) PyMem_Malloc(sizeof(int)*len);
+    assumps = (int *) malloc(sizeof(int)*len);
+    if (assumps == NULL)
+        return PyErr_NoMemory();
+    _vars_to_lits(seq, assumps, len);
+    Py_DECREF(seq);
+
     if (!minisat_solve(self->solver, assumps, len)) {
-        PyMem_Free(assumps);
+        // PyMem_Free(assumps);
+        free(assumps);
         self->result = (len != 0)? UNSATISFIABLE :
             UNSATISFIABLE_UNDER_ASSUMPTIONS;
         Py_RETURN_FALSE;
     }
-    PyMem_Free(assumps);
+    // PyMem_Free(assumps);
+    free(assumps);
     self->result = SATISFIED;
     Py_RETURN_TRUE;
 }
