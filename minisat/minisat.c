@@ -286,7 +286,7 @@ static PyMethodDef Solver_methods[] = {
      "Return the size of clauses."},
     {"issolved", Solver_issolved, METH_NOARGS,
      "Return if model is solved or not."},
-    {"issatified", Solver_issatisfied, METH_NOARGS,
+    {"issatisfied", Solver_issatisfied, METH_NOARGS,
      "Return if model is satified or not"},
     {"new_var", Solver_new_var, METH_NOARGS,
      "Add new variables to solver."},
