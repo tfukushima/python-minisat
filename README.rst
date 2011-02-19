@@ -33,6 +33,6 @@ Copyright (c) 2011 Taku Fukushima. All rights reserved.
 License
 --------
 
-python-minisat is `MIT Lisense <http://www.opensource.org/licenses/mit-license.php>`
+python-minisat is `MIT Lisense <http://www.opensource.org/licenses/mit-license.php>`_
 
 If you'd like to know more detail, check ``COPYRIGHT`` in source.
