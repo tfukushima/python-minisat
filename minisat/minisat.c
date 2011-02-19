@@ -107,17 +107,32 @@ static PyObject *Var_value(VarObject *var)
 }
 
 static PyMethodDef Var_methods[] = {
-    {"__pos__", Var_positive, METH_NOARGS,"Return positive variable."},
-    {"__neg__", Var_negative, METH_NOARGS, "Return negative(inversion) variable."},
-    {"value", NULL, METH_NOARGS,"Return value of var."},
+    {"__invert__", Var_negative, METH_O | METH_COEXIST, "Return value of var."},
+    {"__neg__", Var_negative, METH_O | METH_COEXIST, "Return value of var."},
+    {"__pos__", Var_positive, METH_O | METH_COEXIST,"Return value of var."},
+    {"value", Var_value, METH_NOARGS,"Return value of var."},
     { NULL, NULL, 0, NULL}  // Sentinel
+};
+
+static PyNumberMethods Var_as_number = {
+    0,  // nb_add
+    0,  // nb_subtract
+    0,  // nb_multiply
+    0,  // nb_divide
+    0,  // nb_remainder
+    0,  // nb_divmod
+    0,  // nb_power
+    Var_negative, // nb_negative
+    Var_positive, // nb_positive
+    0,  // nb_absolute
+    0,  // nb_nonzero
 };
 
 // Solver
 static PyObject* Solver_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 {
     SolverObject *self;
-
+    
     self = (SolverObject *)type->tp_alloc(type, 0);
     if (self != NULL) {
         self->solver = minisat_new();
@@ -304,18 +319,19 @@ initminisat(void)
     Py_INCREF(&SolverType);
     PyModule_AddObject(minisat, "Solver", (PyObject *)&SolverType);
     
-    SolverError = PyErr_NewException("minisat.SolverError", NULL, NULL);
+    SolverError = PyErr_NewException("minisat.error.SolverError", NULL, NULL);
     Py_INCREF(SolverError);
     PyModule_AddObject(minisat, "SolverError", SolverError);
 
     // Var
     VarType.tp_methods = Var_methods;
+    VarType.tp_as_number = &Var_as_number;
     if (PyType_Ready(&VarType) < 0)
         return;
     Py_INCREF(&VarType);
     PyModule_AddObject(minisat, "Var", (PyObject *)&VarType);
     
-    VarError = PyErr_NewException("minisat.VarError", NULL, NULL);
+    VarError = PyErr_NewException("minisat.error.VarError", NULL, NULL);
     Py_INCREF(SolverError);
     PyModule_AddObject(minisat, "VarError", VarError);
 }
