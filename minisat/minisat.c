@@ -24,8 +24,6 @@ typedef struct {
     PyObject_HEAD
     minisat_solver solver;
     status_t result;
-    int clause_size;
-    int var_size;
 } SolverObject;
 
 // Var object
