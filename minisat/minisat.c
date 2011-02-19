@@ -178,7 +178,7 @@ static void _vars_to_lits(PyObject *seq, int *lits, int len)
 
 static PyObject *Solver_assigned_size(SolverObject *self)
 {
-    return minisat_assigned_size(self->solver);
+    return Py_BuildValue("i", minisat_assigned_size(self->solver));
 }
 
 static PyObject *Solver_add_clause(SolverObject *self, PyObject *args)
@@ -207,7 +207,7 @@ static PyObject *Solver_add_clause(SolverObject *self, PyObject *args)
 
 static PyObject *Solver_clause_size(SolverObject *self)
 {
-    return minisat_clause_size(self->solver);
+    return Py_BuildValue("i", minisat_clause_size(self->solver));
 }
 
 static PyObject *Solver_new_var(SolverObject *self)
@@ -274,7 +274,7 @@ static PyObject *Solver_solve(SolverObject *self, PyObject *args)
 
 static PyObject *Solver_var_size(SolverObject *self)
 {
-    return minisat_var_size(self->solver);
+    return Py_BuildValue("i", minisat_var_size(self->solver));
 }
 
 static PyMethodDef Solver_methods[] = {
@@ -319,7 +319,7 @@ initminisat(void)
     Py_INCREF(&SolverType);
     PyModule_AddObject(minisat, "Solver", (PyObject *)&SolverType);
     
-    SolverError = PyErr_NewException("minisat.error.SolverError", NULL, NULL);
+    SolverError = PyErr_NewException("minisat.SolverError", NULL, NULL);
     Py_INCREF(SolverError);
     PyModule_AddObject(minisat, "SolverError", SolverError);
 
@@ -331,7 +331,7 @@ initminisat(void)
     Py_INCREF(&VarType);
     PyModule_AddObject(minisat, "Var", (PyObject *)&VarType);
     
-    VarError = PyErr_NewException("minisat.error.VarError", NULL, NULL);
+    VarError = PyErr_NewException("minisat.VarError", NULL, NULL);
     Py_INCREF(SolverError);
     PyModule_AddObject(minisat, "VarError", VarError);
 }
