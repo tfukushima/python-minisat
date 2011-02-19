@@ -126,6 +126,7 @@ static PyNumberMethods Var_as_number = {
     Var_positive, // nb_positive
     0,  // nb_absolute
     0,  // nb_nonzero
+    Var_negative,  // nb_invert
 };
 
 // Solver
