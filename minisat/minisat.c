@@ -72,14 +72,14 @@ static void _is_model_available(status_t result, int deep_check)
     switch (result) {
     case NOT_SOLVED_YET:
         if (deep_check)
-            PyErr_SetString(SolverError, "Model haven't been solved yet.");
+            PyErr_SetString(PyExc_RuntimeError, "Model haven't been solved yet.");
         break;
     case UNSATISFIABLE:
-        PyErr_SetString(SolverError, "Model is not satifiable." );
+        PyErr_SetString(PyExc_RuntimeError, "Model is not satifiable." );
         break;
     case UNSATISFIABLE_UNDER_ASSUMPTIONS:
         if (deep_check)
-            PyErr_SetString(SolverError,
+            PyErr_SetString(PyExc_RuntimeError,
                             "Model is not satifiable under given assumptions.");
         break;
     }
@@ -105,10 +105,14 @@ static PyObject *Var_value(VarObject *var)
 }
 
 static PyMethodDef Var_methods[] = {
-    {"__invert__", Var_negative, METH_O | METH_COEXIST, "Return value of var."},
-    {"__neg__", Var_negative, METH_O | METH_COEXIST, "Return value of var."},
-    {"__pos__", Var_positive, METH_O | METH_COEXIST,"Return value of var."},
-    {"value", Var_value, METH_NOARGS,"Return value of var."},
+    {"__invert__", (PyCFunction) Var_negative, METH_O | METH_COEXIST,
+     "Return value of var."},
+    {"__neg__", (PyCFunction) Var_negative, METH_O | METH_COEXIST,
+     "Return value of var."},
+    {"__pos__", (PyCFunction) Var_positive, METH_O | METH_COEXIST,
+     "Return value of var."},
+    {"value", (PyCFunction) Var_value, METH_NOARGS,
+     "Return value of var."},
     { NULL, NULL, 0, NULL}  // Sentinel
 };
 
@@ -120,11 +124,11 @@ static PyNumberMethods Var_as_number = {
     0,  // nb_remainder
     0,  // nb_divmod
     0,  // nb_power
-    Var_negative, // nb_negative
-    Var_positive, // nb_positive
+    (unaryfunc) Var_negative, // nb_negative
+    (unaryfunc) Var_positive, // nb_positive
     0,  // nb_absolute
     0,  // nb_nonzero
-    Var_negative,  // nb_invert
+    (unaryfunc) Var_negative,  // nb_invert
 };
 
 // Solver
@@ -159,7 +163,7 @@ static PyTypeObject SolverType = {
     tp_name: "minisat.Solver",
     tp_basicsize: sizeof(SolverObject),
     tp_flags: Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,
-    tp_new : Solver_new,
+    tp_new :  Solver_new,
     tp_dealloc: (destructor) Solver_dealloc,
     tp_doc: "MiniSat solver objects",
 };
@@ -277,23 +281,23 @@ static PyObject *Solver_var_size(SolverObject *self)
 }
 
 static PyMethodDef Solver_methods[] = {
-    {"add_clause", Solver_add_clause, METH_VARARGS,
+    {"add_clause", (PyCFunction) Solver_add_clause, METH_VARARGS,
      "Add a clause to solver.\nThe clause should be a list contains vars."},
-    {"assigned_size", Solver_assigned_size, METH_NOARGS,
+    {"assigned_size", (PyCFunction) Solver_assigned_size, METH_NOARGS,
      "Return the size of assined variables."},
-    {"clause_size", Solver_clause_size, METH_NOARGS,
+    {"clause_size", (PyCFunction) Solver_clause_size, METH_NOARGS,
      "Return the size of clauses."},
-    {"issolved", Solver_issolved, METH_NOARGS,
+    {"issolved", (PyCFunction) Solver_issolved, METH_NOARGS,
      "Return if model is solved or not."},
-    {"issatisfied", Solver_issatisfied, METH_NOARGS,
+    {"issatisfied", (PyCFunction) Solver_issatisfied, METH_NOARGS,
      "Return if model is satified or not"},
-    {"new_var", Solver_new_var, METH_NOARGS,
+    {"new_var", (PyCFunction) Solver_new_var, METH_NOARGS,
      "Add new variables to solver."},
-    {"simplify", Solver_simplify, METH_NOARGS,
+    {"simplify", (PyCFunction) Solver_simplify, METH_NOARGS,
      "Simplyfy the model with given variables."},
-    {"solve", Solver_solve, METH_NOARGS,
+    {"solve", (PyCFunction) Solver_solve, METH_NOARGS,
      "Solve the model with given assumptions"},
-    {"var_size", Solver_var_size, METH_NOARGS,
+    {"var_size", (PyCFunction) Solver_var_size, METH_NOARGS,
      "Return the size of variables"},
     { NULL, NULL, 0, NULL}  // Sentinel
 };
