@@ -6,7 +6,7 @@ except ImportError:
 import sys, os
 
 version = '0.1.0'
-library_dirs = ['/usr/lib', '/usr/local/lib']
+library_dirs = ['/usr/local/lib']
 
 MINISAT_ROOT = os.path.join(os.path.dirname(__file__), 'minisat/src')
 MINISAT_SOURCE_ROOT = os.path.join(os.path.dirname(__file__), 'minisat/src/minisat')
@@ -38,12 +38,15 @@ This package is wrapper module of `MiniSat <http://minisat.se/Main.html>`_.""",
       include_package_data=True,
       zip_safe=False,
       ext_modules = [Extension("minisat",
-                               sources=["minisat/MiniSatWrapper.cc",
-                                        "minisat/minisat.c"],
+                               sources=["minisat/src/minisat/core/Solver.cc",
+                                        "minisat/MiniSatWrapper.cc",
+                                        "minisat/minisat.c",
+                                        ],
                                define_macros = [('__STDC_LIMIT_MACROS', None),
                                                 ('__STDC_FORMAT_MACROS', None)],
                                #extra_compile_args = ["-Wall", "-Wno-parenthesis",
                                #                      "-Wextra"],
+                               extra_compile_args = [],
                                #extra_link_args = ["-Wall", "-lz"],
                                extra_link_args = ["-lz"],
                                include_dirs=include_dirs,

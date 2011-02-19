@@ -181,7 +181,7 @@ static PyObject *Solver_add_clause(SolverObject *self, PyObject *args)
         _vars_to_lits(seq, lits, len);
         Py_DECREF(seq);
     }
-    if (!minisat_add_claus(self->solver, lits, len)) {
+    if (!minisat_add_clause(self->solver, lits, len)) {
         PyMem_Free(lits);
         Py_RETURN_FALSE;
     }
@@ -224,7 +224,7 @@ static PyObject *Solver_issatisfied(SolverObject *self)
 
 static PyObject *Solver_simplify(SolverObject *self)
 {
-    if (!minsat_simplify(self->solver)) {
+    if (!minisat_simplify(self->solver)) {
         Py_RETURN_FALSE;
     }
     Py_RETURN_TRUE;
@@ -243,7 +243,7 @@ static PyObject *Solver_solve(SolverObject *self, PyObject *args)
         if (assumps == NULL)
             return PyErr_NoMemory();
         _vars_to_lits(seq, assumps, len);
-        PyDECREF(seq);
+        Py_DECREF(seq);
     }
     
     if (!minisat_solve(self->solver, assumps, len)) {
