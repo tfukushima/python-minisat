@@ -1,7 +1,8 @@
 setup.cfg
 setup.py
-minisat/MiniSatWrapper.cpp
+minisat/MiniSatWrapper.cc
 minisat/minisat.c
+minisat/src/minisat/core/Solver.cc
 python_minisat.egg-info/PKG-INFO
 python_minisat.egg-info/SOURCES.txt
 python_minisat.egg-info/dependency_links.txt

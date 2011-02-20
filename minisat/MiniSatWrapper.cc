@@ -54,11 +54,16 @@ extern "C" int minisat_add_clause(minisat_solver solver, int *lits, int len)
 }
 
 // Solving
-extern "C" int minisat_solve(minisat_solver solver, int *lits, int len)
+extern "C" int minisat_solve_with_assumps(minisat_solver solver, int *lits, int len)
 {
     vec<Lit> assumptions;
     for (int i = 0; i < len; i++) assumptions.push(toLit(lits[i]));
     return ((Solver *)solver)->solve(assumptions) ? 1 : 0;
+}
+
+extern "C" int minisat_solve(minisat_solver solver)
+{
+    return ((Solver *)solver)->solve() ? 1 : 0;
 }
 
 extern "C" int minisat_simplify(minisat_solver solver)
@@ -69,7 +74,7 @@ extern "C" int minisat_simplify(minisat_solver solver)
 // State
 extern "C" int minisat_model_value(minisat_solver solver, int var)
 {
-    lbool lb = ((Solver *)solver)->modelValue(var);
+    lbool lb = ((Solver *)solver)->modelValue(toLit(var));
     return (lb == l_True) ? 0 : (lb == l_False)? 1 : 2;
 }
 

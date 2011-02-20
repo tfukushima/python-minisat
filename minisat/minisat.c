@@ -148,8 +148,7 @@ static PyObject* Solver_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
     return (PyObject *)self;
 }
 
-static PyObject* 
-Solver_dealloc(SolverObject *self)
+static PyObject *Solver_dealloc(SolverObject *self)
 {
     minisat_free(self->solver);
     /* Py_XDECREF(self->solver); */
@@ -192,7 +191,8 @@ static PyObject *Solver_add_clause(SolverObject *self, PyObject *args)
     PyObject *var_list, *seq, *element, *ret;
     
     if (!PyArg_ParseTuple(args, "O", &var_list)) {
-        PyErr_SetString(PyExc_RuntimeError, "The clause should be given as a list.");
+        PyErr_SetString(PyExc_RuntimeError,
+                        "The clause should be given as a list.");
         return NULL;
     }
     seq = PySequence_Fast(var_list, "the clause should be a list.");
@@ -210,7 +210,8 @@ static PyObject *Solver_add_clause(SolverObject *self, PyObject *args)
         Py_RETURN_FALSE;
     }
 
-    PyMem_Free(lits);
+    // PyMem_Free(lits);
+    free(lits);
     Py_RETURN_TRUE;
 }
 
@@ -260,6 +261,15 @@ static PyObject *Solver_solve(SolverObject *self, PyObject *args)
     int *assumps;
     PyObject *var_list, *seq, *ret;
 
+    if (args == NULL) {
+        if (!minisat_solve(self->solver)) {
+            self->result = UNSATISFIABLE_UNDER_ASSUMPTIONS;
+            Py_RETURN_FALSE;
+        }
+        self->result = SATISFIED;
+        Py_RETURN_TRUE;
+    }
+
     if (!PyArg_ParseTuple(args, "O", &var_list)) {
         PyErr_SetString(PyExc_RuntimeError, "Model haven't been solved yet.");
         return NULL;
@@ -273,11 +283,10 @@ static PyObject *Solver_solve(SolverObject *self, PyObject *args)
     _vars_to_lits(seq, assumps, len);
     Py_DECREF(seq);
 
-    if (!minisat_solve(self->solver, assumps, len)) {
+    if (!minisat_solve_with_assumps(self->solver, assumps, len)) {
         // PyMem_Free(assumps);
         free(assumps);
-        self->result = (len != 0)? UNSATISFIABLE :
-            UNSATISFIABLE_UNDER_ASSUMPTIONS;
+        self->result = UNSATISFIABLE;
         Py_RETURN_FALSE;
     }
     // PyMem_Free(assumps);

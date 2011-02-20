@@ -26,7 +26,8 @@ extern "C" {
     extern int minisat_add_clause(minisat_solver solver, int *lits, int len);
     // Solving
     extern int minisat_simplify(minisat_solver solver);
-    extern int minisat_solve(minisat_solver solver, int *lits, int len);
+    extern int minisat_solve(minisat_solver solver);
+    extern int minisat_solve_with_assumps(minisat_solver solver, int *lits, int len);
     // Variables
     extern int minisat_model_value(minisat_solver solver, int var);
     extern int minisat_assined_size(minisat_solver solver);
