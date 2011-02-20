@@ -4,20 +4,19 @@ from nose.core import *
 
 @raises(TypeError)
 def test_var_new_var():
-    """Test whether the instance object of Var can be created through Solver or
-    not.
+    """Var object should not be created except for Solver's new_var() method.
     """
     v = minisat.Var()
 
 def test_var_positive():
-    """Test for +a.
+    """Var object should be able to return its positive Var object.
     """
     solver = minisat.Solver()
     v = solver.new_var()
     p = +v
 
 def test_var_negative():
-    """Test for -a.
+    """Var object should be able to return its negative Var object.
     """
     solver = minisat.Solver()
     v = solver.new_var()
