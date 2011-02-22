@@ -9,12 +9,13 @@
 
 #include <Python.h>
 // #include <structmember.h>
+#include <stdbool.h>
 
 #include "minisat.h"
 
 typedef enum status {
-    SATISFIED = 0,
-    NOT_SOLVED_YET,
+    NOT_SOLVED_YET = 0,
+    SATISFIED,
     UNSATISFIABLE,
     UNSATISFIABLE_UNDER_ASSUMPTIONS,
 } status_t;
@@ -22,7 +23,7 @@ typedef enum status {
 // MiniSat Solver object
 typedef struct {
     PyObject_HEAD
-    minisat_solver solver;
+    minisat_solver _solver;
     status_t result;
 } SolverObject;
 
@@ -67,20 +68,27 @@ static PyObject *Var_negative(VarObject *var)
     return (PyObject *)rvar;
 }
 
-static void _is_model_available(status_t result, int deep_check)
+static int *check_model_available(status_t result, int deep_check)
 {
     switch (result) {
     case NOT_SOLVED_YET:
-        if (deep_check)
-            PyErr_SetString(PyExc_RuntimeError, "Model haven't been solved yet.");
+        if (deep_check) {
+            PyErr_SetString(SolverError, "Model haven't been solved yet.");
+            return false;
+        }
         break;
-    case UNSATISFIABLE:
-        PyErr_SetString(PyExc_RuntimeError, "Model is not satifiable." );
-        break;
+   case UNSATISFIABLE:
+       PyErr_SetString(SolverError, "Model is not satifiable." );
+       return false;
+       break;
     case UNSATISFIABLE_UNDER_ASSUMPTIONS:
-        if (deep_check)
-            PyErr_SetString(PyExc_RuntimeError,
+        if (deep_check) {
+            PyErr_SetString(SolverError,
                             "Model is not satifiable under given assumptions.");
+            return false;
+        }
+    default:
+        return true;
         break;
     }
 }
@@ -88,8 +96,11 @@ static void _is_model_available(status_t result, int deep_check)
 static PyObject *Var_value(VarObject *var)
 {
     int value;
+    const PyObject *exception;
 
-    _is_model_available(var->solver->result, 0);
+    if (!check_model_available(var->solver->result, true))
+        return NULL;
+
     value = minisat_model_value(var->solver, var->value);
     switch (value) {
     case 0:  // case of l_True
@@ -138,9 +149,9 @@ static PyObject* Solver_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
     
     self = (SolverObject *)type->tp_alloc(type, 0);
     if (self != NULL) {
-        self->solver = minisat_new();
+        self->_solver = minisat_new();
         self->result = NOT_SOLVED_YET;
-        if (self->solver == NULL) {
+        if (self->_solver == NULL) {
             Py_DECREF(self);
             return NULL;
         }
@@ -150,8 +161,8 @@ static PyObject* Solver_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 
 static PyObject *Solver_dealloc(SolverObject *self)
 {
-    minisat_free(self->solver);
-    /* Py_XDECREF(self->solver); */
+    minisat_free(self->_solver);
+    /* Py_XDECREF(self->_solver); */
     /* Py_XDECREF(self->result); */
     /* Py_XDECREF(self->clause_size); */
     /* Py_XDECREF(self->var_size); */
@@ -181,7 +192,7 @@ static void _vars_to_lits(PyObject *seq, int *lits, int len)
 
 static PyObject *Solver_assigned_size(SolverObject *self)
 {
-    return Py_BuildValue("i", minisat_assigned_size(self->solver));
+    return Py_BuildValue("i", minisat_assigned_size(self->_solver));
 }
 
 static PyObject *Solver_add_clause(SolverObject *self, PyObject *args)
@@ -197,27 +208,27 @@ static PyObject *Solver_add_clause(SolverObject *self, PyObject *args)
     }
     seq = PySequence_Fast(var_list, "the clause should be a list.");
     len = PySequence_Length(seq);
-    // lits = (int *) PyMem_Malloc(sizeof(int)*len);
-    lits = (int *) malloc(sizeof(int)*len);
+    lits = (int *) PyMem_Malloc(sizeof(int)*len);
+    // lits = (int *) malloc(sizeof(int)*len);
     if (lits == NULL)
         return PyErr_NoMemory();
     _vars_to_lits(seq, lits, len);
     Py_DECREF(seq);
 
-    if (!minisat_add_clause(self->solver, lits, len)) {
-        // PyMem_Free(lits);
-        free(lits);
+    if (!minisat_add_clause(self->_solver, lits, len)) {
+        PyMem_Free(lits);
+        // free(lits);
         Py_RETURN_FALSE;
     }
 
-    // PyMem_Free(lits);
-    free(lits);
+    PyMem_Free(lits);
+    // free(lits);
     Py_RETURN_TRUE;
 }
 
 static PyObject *Solver_clause_size(SolverObject *self)
 {
-    return Py_BuildValue("i", minisat_clause_size(self->solver));
+    return Py_BuildValue("i", minisat_clause_size(self->_solver));
 }
 
 static PyObject *Solver_new_var(SolverObject *self)
@@ -225,8 +236,8 @@ static PyObject *Solver_new_var(SolverObject *self)
     VarObject *var;
 
     var = PyObject_New(VarObject, &VarType);
-    var->value = minisat_new_var(self->solver);
-    var->solver = self->solver;
+    var->value = minisat_new_var(self->_solver);
+    var->solver = self;
     self->result = NOT_SOLVED_YET;
     return (PyObject *)var;
 }
@@ -249,7 +260,7 @@ static PyObject *Solver_issatisfied(SolverObject *self)
 
 static PyObject *Solver_simplify(SolverObject *self)
 {
-    if (!minisat_simplify(self->solver)) {
+    if (!minisat_simplify(self->_solver)) {
         Py_RETURN_FALSE;
     }
     Py_RETURN_TRUE;
@@ -262,7 +273,7 @@ static PyObject *Solver_solve(SolverObject *self, PyObject *args)
     PyObject *var_list, *seq, *ret;
 
     if (args == NULL) {
-        if (!minisat_solve(self->solver)) {
+        if (!minisat_solve(self->_solver)) {
             self->result = UNSATISFIABLE_UNDER_ASSUMPTIONS;
             Py_RETURN_FALSE;
         }
@@ -271,33 +282,33 @@ static PyObject *Solver_solve(SolverObject *self, PyObject *args)
     }
 
     if (!PyArg_ParseTuple(args, "O", &var_list)) {
-        PyErr_SetString(PyExc_RuntimeError, "Model haven't been solved yet.");
+        PyErr_SetString(SolverError, "Model haven't been solved yet.");
         return NULL;
     }
     seq = PySequence_Fast(var_list, "the assumption should be a list.");
     len = PySequence_Length(seq);
-    // assumps = (int *) PyMem_Malloc(sizeof(int)*len);
-    assumps = (int *) malloc(sizeof(int)*len);
+    assumps = (int *) PyMem_Malloc(sizeof(int)*len);
+    // assumps = (int *) malloc(sizeof(int)*len);
     if (assumps == NULL)
         return PyErr_NoMemory();
     _vars_to_lits(seq, assumps, len);
     Py_DECREF(seq);
 
-    if (!minisat_solve_with_assumps(self->solver, assumps, len)) {
-        // PyMem_Free(assumps);
-        free(assumps);
+    if (!minisat_solve_with_assumps(self->_solver, assumps, len)) {
+        PyMem_Free(assumps);
+        // free(assumps);
         self->result = UNSATISFIABLE;
         Py_RETURN_FALSE;
     }
-    // PyMem_Free(assumps);
-    free(assumps);
+    PyMem_Free(assumps);
+    // free(assumps);
     self->result = SATISFIED;
     Py_RETURN_TRUE;
 }
 
 static PyObject *Solver_var_size(SolverObject *self)
 {
-    return Py_BuildValue("i", minisat_var_size(self->solver));
+    return Py_BuildValue("i", minisat_var_size(self->_solver));
 }
 
 static PyMethodDef Solver_methods[] = {
