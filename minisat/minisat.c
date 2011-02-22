@@ -53,7 +53,8 @@ static PyTypeObject VarType = {
 static PyObject *Var_positive(VarObject *var)
 {
     VarObject *rvar = PyObject_New(VarObject, &VarType);
-
+    if (rvar == NULL)  return NULL;
+    rvar = (VarObject *)PyObject_Init((PyObject *)rvar, &VarType);
     rvar->value = minisat_lit_pos_var(var->value);
     rvar->solver = var->solver;
     return (PyObject *)rvar;
@@ -62,7 +63,8 @@ static PyObject *Var_positive(VarObject *var)
 static PyObject *Var_negative(VarObject *var)
 {
     VarObject *rvar = PyObject_New(VarObject, &VarType);
-
+    if (rvar == NULL)  return NULL;
+    rvar = (VarObject *)PyObject_Init((PyObject *)rvar, &VarType);
     rvar->value = minisat_lit_neg_var(var->value);
     rvar->solver = var->solver;
     return (PyObject *)rvar;
@@ -236,6 +238,7 @@ static PyObject *Solver_new_var(SolverObject *self)
     VarObject *var;
 
     var = PyObject_New(VarObject, &VarType);
+    if (var == NULL)  return NULL;
     var->value = minisat_new_var(self->_solver);
     var->solver = self;
     self->result = NOT_SOLVED_YET;
