@@ -68,7 +68,7 @@ static PyObject *Var_negative(VarObject *var)
     return (PyObject *)rvar;
 }
 
-static int *check_model_available(status_t result, int deep_check)
+static int check_model_available(status_t result, int deep_check)
 {
     switch (result) {
     case NOT_SOLVED_YET:
