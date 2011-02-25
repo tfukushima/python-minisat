@@ -50,6 +50,8 @@ def test_var_multi_value():
     b = solver.new_var()
     assert_is(solver.issatisfied(), False)
     solver.add_clause([ a,  b])
+    # solver.add_clause([ a,  a])
+    # solver.add_clause([ b,  b])
     solver.add_clause([-a,  b])
     solver.add_clause([ a, -b])
     assert_is(solver.solve(), True)

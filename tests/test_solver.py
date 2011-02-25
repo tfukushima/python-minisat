@@ -63,9 +63,9 @@ def test_solver_solve():
     a = solver.new_var()
     b = solver.new_var()
     solver.add_clause([ a,  b])
-    # solver.add_clause([a, a])
-    # solver.add_clause([-a,  b])
-    # solver.add_clause([ a, -b])
+    solver.add_clause([ a,  a])
+    solver.add_clause([-a,  b])
+    solver.add_clause([ a, -b])
     assert_is(solver.solve(), True)
 
 if __name__ == '__main__':
