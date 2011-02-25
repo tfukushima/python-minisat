@@ -40,13 +40,6 @@ extern "C" int minisat_new_var(minisat_solver solver)
 
 extern "C" int minisat_add_clause(minisat_solver solver, int *lits, int len)
 {
-    // if (lits == NULL && len == 0) {
-    //     ((Solver *) solver)->addEmptyClause();
-    // } else {
-    //     vec<Lit> clause;
-    //     for (int i = 0; i < len; i++) clause.push(toLit(lits[i]));
-    //     ((Solver *) solver)->addClause(clause);
-    // }
     vec<Lit> clause;
     for (int i = 0; i < len; i++) clause.push(toLit(lits[i]));
     ((Solver *) solver)->addClause(clause);

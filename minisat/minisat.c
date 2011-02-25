@@ -183,12 +183,14 @@ static PyTypeObject SolverType = {
 
 static void _vars_to_lits(PyObject *seq, int *lits, int len)
 {
-    int i;
+    int i, value;
     PyObject *element;
 
     for (i = 0; i < len; i++) {
         element = PySequence_Fast_GET_ITEM(seq, i);
-        lits[i] = minisat_lit_pos_var(((VarObject *)element)->value);
+        value = ((VarObject *)element)->value;
+        lits[i] = (value >= 0)?  minisat_lit_pos_var(value) :
+            minisat_lit_neg_var(value);
     }
 }
 
@@ -211,7 +213,6 @@ static PyObject *Solver_add_clause(SolverObject *self, PyObject *args)
     seq = PySequence_Fast(var_list, "the clause should be a list.");
     len = PySequence_Length(seq);
     lits = (int *) PyMem_Malloc(sizeof(int)*len);
-    // lits = (int *) malloc(sizeof(int)*len);
     if (lits == NULL)
         return PyErr_NoMemory();
     _vars_to_lits(seq, lits, len);
@@ -219,12 +220,10 @@ static PyObject *Solver_add_clause(SolverObject *self, PyObject *args)
 
     if (!minisat_add_clause(self->_solver, lits, len)) {
         PyMem_Free(lits);
-        // free(lits);
         Py_RETURN_FALSE;
     }
 
     PyMem_Free(lits);
-    // free(lits);
     Py_RETURN_TRUE;
 }
 
@@ -291,7 +290,6 @@ static PyObject *Solver_solve(SolverObject *self, PyObject *args)
     seq = PySequence_Fast(var_list, "the assumption should be a list.");
     len = PySequence_Length(seq);
     assumps = (int *) PyMem_Malloc(sizeof(int)*len);
-    // assumps = (int *) malloc(sizeof(int)*len);
     if (assumps == NULL)
         return PyErr_NoMemory();
     _vars_to_lits(seq, assumps, len);
@@ -299,12 +297,10 @@ static PyObject *Solver_solve(SolverObject *self, PyObject *args)
 
     if (!minisat_solve_with_assumps(self->_solver, assumps, len)) {
         PyMem_Free(assumps);
-        // free(assumps);
         self->result = UNSATISFIABLE;
         Py_RETURN_FALSE;
     }
     PyMem_Free(assumps);
-    // free(assumps);
     self->result = SATISFIED;
     Py_RETURN_TRUE;
 }
@@ -349,7 +345,6 @@ initminisat(void)
     if (minisat == NULL)
         return;
     // Solver
-    // SolverType.tp_new = PyType_GenericNew;
     SolverType.tp_methods = Solver_methods;
     if (PyType_Ready(&SolverType) < 0)
         return;
